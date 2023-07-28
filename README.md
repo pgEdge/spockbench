@@ -5,7 +5,7 @@
 * [Installation](#installation)
 * [Running spockbench](#running-spockbench)
 * [What spockbench does](#what-spockbench-does)
-* [Checking consistency](#checkint-consistency)
+* [Checking consistency](#checking-consistency)
 
 ## Overview
 
