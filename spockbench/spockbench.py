@@ -16,6 +16,7 @@ class SpockBench:
         self.have_fkeys = False
         self.node = 1
         self.num_nodes = 3
+        self.no_hid = False
         self.tempfiles = []
 
         # ----
@@ -102,17 +103,18 @@ class SpockBench:
         # ----
         # Add column pgbench_history.hid as a primary key for replication
         # systems that cannot replicate tables without a PK.
-        # TODO: make this an option
         # ----
-        cmd = ['pgbench']
-        cmd.append('-n')
-        cmd.append('-c1')
-        cmd.append('-t1')
-        cmd += ['-f', self.sql_fname['alter-H']]
-        cmd += self.pgbench_opts
-        cmd += self.pgbench_args
-        #print("adding primary key hid to pgbench_history")
-        #subprocess.run(cmd, stdout = subprocess.DEVNULL)
+        if self.no_hid == False:
+            cmd = ['pgbench']
+            cmd.append('-n')
+            cmd.append('-c1')
+            cmd.append('-t1')
+            cmd += ['-f', self.sql_fname['alter-H']]
+            cmd += ['-D', 'nodeid=' + str(self.node)]
+            cmd += self.pgbench_opts
+            cmd += self.pgbench_args
+            print("adding primary key hid to pgbench_history")
+            subprocess.run(cmd, stdout = subprocess.DEVNULL)
 
     def parse_options(self, argv):
         self.pgbench_opts = []
@@ -125,6 +127,7 @@ class SpockBench:
             opts, self.pgbench_args = getopt(argv,
                 "iF:s:c:Cj:lL:M:nP:rR:t:T:dh:p:U:",
                 ['spock-node=', 'spock-num-nodes=', 'spock-tx-mix=',
+                 'spock-no-hid',
                  'initialize', 'fillfactor=', 'scale=',
                  'foreign-keys', 'index-tablespace=',
                  'partitions=', 'partition-method=',
@@ -163,6 +166,8 @@ class SpockBench:
                 self.tx_local = vals[0]
                 self.tx_remote_A = vals[1]
                 self.tx_remote_TA = vals[2]
+            elif opt in ['--spock-no-hid',]:
+                self.no_hid = True
             elif opt in ['-i', '--initialize',]:
                 self.is_init = True
             elif opt in ['-s', '--scale',]:

@@ -5,6 +5,7 @@
 * [Installation](#installation)
 * [Running spockbench](#running-spockbench)
 * [What spockbench does](#what-spockbench-does)
+* [Checking consistency](#checkint-consistency)
 
 ## Overview
 
@@ -170,6 +171,13 @@ The **--builtin** option makes no sense for the same reason.
 	from a remote branch (a branch that does not have the local node
 	has home database).
 
+*	**--spock-no-hid**
+
+	By default `spockbench` adds a primary key column HID to the
+	pgbench_history table. This can be used for database comparison
+	as well as allowing the HISTORY table to be added to replication
+	without creating a separate insert-only set. the --spock-no-hid
+	option suppresses this column.
 
 ## What spockbench does
 
@@ -408,4 +416,33 @@ uniformly from all accounts, including the home branches of the node.
 The TPC-B specification asks for 15% to be remote, not including home branches.
 So on a 3-node cluster we need to adjust for that by using a probability
 of 15% / 2 * 3 = 22.5 and thus end up with @775, @225 and @0.
+
+## Checking Consistency
+
+A TPC-B database has inherent consistency requirements. After a
+benchmark run the balance columns of the BRANCHES, TELLERS and
+ACCOUNTS tables need to be equal to the sum of the corresponding
+HISTORY rows. The file `spockbench-check.sql` verifies this and
+can be executed with the command
+```
+spockbench-check [CONNECT-OPTIONS] [DATABASE-NAME]
+```
+
+The output should look like this:
+```
+ check | count |          description
+-------+-------+--------------------------------
+ OK    |     0 | bbalance <> history.sum(delta)
+(1 row)
+
+ check | count |          description
+-------+-------+--------------------------------
+ OK    |     0 | tbalance <> history.sum(delta)
+(1 row)
+
+ check | count |          description
+-------+-------+--------------------------------
+ OK    |     0 | abalance <> history.sum(delta)
+(1 row)
+```
 
