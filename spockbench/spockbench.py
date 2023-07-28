@@ -18,6 +18,8 @@ class SpockBench:
         self.num_nodes = 3
         self.no_hid = False
         self.no_delta_apply = False
+        self.no_data = False
+        self.data_only = False
         self.tempfiles = []
 
         # ----
@@ -37,7 +39,7 @@ class SpockBench:
         # running the benchmark because :scale is not provided by
         # pgbench when running custom scripts.
         # ----
-        if self.scale is None:
+        if self.scale is None and self.no_data == False:
             print("spockbench requires the -s/--scale option",
                   file = sys.stderr)
             sys.exit(2)
@@ -76,14 +78,36 @@ class SpockBench:
         subprocess.run(cmd)
 
     def run_init(self):
+        if self.data_only:
+            # ----
+            # Create the pgbench schema and load the data
+            # ----
+            cmd = ['pgbench']
+            cmd.append('-i')
+            cmd.append('-s')
+            cmd.append(str(self.scale))
+            cmd.append('-I')
+            cmd.append('g')
+            cmd += self.pgbench_iopts
+            cmd += self.pgbench_args
+            subprocess.run(cmd)
+            return
+
         # ----
         # Create the pgbench schema and load the data
         # ----
         cmd = ['pgbench']
         cmd.append('-n')
         cmd.append('-i')
-        cmd.append('-s')
-        cmd.append(str(self.scale))
+        if self.no_data:
+            cmd.append('-I')
+            if self.have_fkeys:
+                cmd.append('dtpfv')
+            else:
+                cmd.append('dtpv')
+        else:
+            cmd.append('-s')
+            cmd.append(str(self.scale))
         cmd += self.pgbench_iopts
         cmd += self.pgbench_args
         subprocess.run(cmd)
@@ -130,6 +154,7 @@ class SpockBench:
                 "iF:s:c:Cj:lL:M:nP:rR:t:T:dh:p:U:",
                 ['spock-node=', 'spock-num-nodes=', 'spock-tx-mix=',
                  'spock-no-hid', 'spock-no-delta-apply',
+                 'no-data', 'data-only',
                  'initialize', 'fillfactor=', 'scale=',
                  'foreign-keys', 'index-tablespace=',
                  'partitions=', 'partition-method=',
@@ -172,6 +197,10 @@ class SpockBench:
                 self.no_hid = True
             elif opt in ['--spock-no-delta-apply',]:
                 self.no_delta_apply = True
+            elif opt in ['--no-data',]:
+                self.no_data = True
+            elif opt in ['--data-only',]:
+                self.data_only = True
             elif opt in ['-i', '--initialize',]:
                 self.is_init = True
             elif opt in ['-s', '--scale',]:

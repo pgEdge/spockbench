@@ -186,6 +186,16 @@ The **--builtin** option makes no sense for the same reason.
 	This option suppresses configuration of the balance columns
 	to log old values for delta-conflict-avoidance (see below).
 
+*   **--no-data**
+*   **--data-only**
+
+	These two options allow to separate schema creation from
+	loading the initial data. This way one can create the
+	schema with empty tables, setup replication including
+	subscriptions and then load the initial data on only one
+	node. Or create one node with data, other nodes without
+	data and use the *sync_data* feature when subscribing them.
+
 ## What spockbench does
 
 Instead of implementing a new benchmark driver from scratch
