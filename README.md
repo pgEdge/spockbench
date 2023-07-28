@@ -108,7 +108,9 @@ user's virtual environmen so that the tools `spockbench` and
 
 `spockbench` is a wrapper around `pgbench`. This section will
 only cover the differences between `pgbench` and `spockbench`.
-Being familiar with running `pgbench` is assumed.
+Being familiar with running
+[pgbench](https://www.postgresql.org/docs/current/pgbench.html)
+is assumed.
 
 ### pgbench options not available in spockbench
 
