@@ -179,6 +179,11 @@ The **--builtin** option makes no sense for the same reason.
 	without creating a separate insert-only set. the --spock-no-hid
 	option suppresses this column.
 
+*	**--spock-no-delta-apply**
+
+	This option suppresses configuration of the balance columns
+	to log old values for delta-conflict-avoidance (see below).
+
 ## What spockbench does
 
 Instead of implementing a new benchmark driver from scratch
@@ -200,6 +205,11 @@ ALTER TABLE pgbench_accounts ALTER COLUMN abalance SET (LOG_OLD_VALUE=true);
 ALTER TABLE pgbench_branches ALTER COLUMN bbalance SET (LOG_OLD_VALUE=true);
 ALTER TABLE pgbench_tellers ALTER COLUMN tbalance SET (LOG_OLD_VALUE=true);
 ```
+
+This can be suppressed with the **--spock-no-delta-apply** option.
+Using this together with the **--spock-tx-mix** option to run a load
+with a high rate of conflict on a multi-master cluster will make the
+[checks](check-consistency) fail.
 
 These ALTER TABLE commands cause Spock to treat the columns via
 delta-conflict-avoidance. That means that they will not follow
@@ -227,7 +237,7 @@ covered here as that is clearly beyond the scope of this README.
 Let us create a `spockbench` database:
 ```
 (venv) [postgres@db1 spockbench]$ createdb spockdb
-(venv) [postgres@db1 spockbench]$ spockbench -i -s99 -F75 spockdb
+(venv) [postgres@db1 spockbench]$ spockbench -i -s12 -F75 --spock-node=1 spockdb
 dropping old tables...
 NOTICE:  table "pgbench_accounts" does not exist, skipping
 NOTICE:  table "pgbench_branches" does not exist, skipping
@@ -235,13 +245,18 @@ NOTICE:  table "pgbench_history" does not exist, skipping
 NOTICE:  table "pgbench_tellers" does not exist, skipping
 creating tables...
 generating data (client-side)...
-9900000 of 9900000 tuples (100%) done (elapsed 10.71 s, remaining 0.00 s)
+1200000 of 1200000 tuples (100%) done (elapsed 1.85 s, remaining 0.00 s)
 creating primary keys...
-done in 15.87 s (drop tables 0.00 s, create tables 0.00 s, client-side generate 10.77 s, primary keys 5.10 s).
+done in 3.29 s (drop tables 0.11 s, create tables 0.07 s, client-side generate 2.63 s, primary keys 0.49 s).
 configuring balance columns for delta-conflict-avoidance
+adding primary key hid to pgbench_history
 ```
-That command more or less ran a default `pgbench -i` but also
-configured BBALANCE, TBALANCE and ABALANCE for delta-conflict-avoidance.
+That command more or less ran a default `pgbench -i -s12` but also
+configured BBALANCE, TBALANCE and ABALANCE for delta-conflict-avoidance
+and added an HID primary key to the HISTORY table. It is important to use
+different node-IDs (--spock-node) values for each node to make this
+primary key conflict free. `spockbench` configures the underlying
+sequence to start on the node-ID and increment by 100.
 
 Now on to running a benchmark:
 ```
@@ -250,7 +265,7 @@ Now on to running a benchmark:
 will do *almost* the exact same thing as `pgbench` would do.
 
 ```
-(venv) [postgres@db1 spockbench]$ spockbench -n -s12 -c10 -T60 -P5 spockdb
+(venv) [postgres@db1 spockbench]$ spockbench -n -s12 -c10 -T60 -P5 --spock-node=1 --spock-num-nodes=3 spockdb
 pgbench (15.3)
 progress: 5.0 s, 42.8 tps, lat 57.185 ms stddev 12.868, 0 failed
 progress: 10.0 s, 159.4 tps, lat 68.811 ms stddev 97.210, 0 failed
@@ -322,7 +337,7 @@ database. What we see in the above example are the default values for
 ```
 
 When we want to distribute the system over multiple nodes with a
-reasonable level on concurrency over ACCOUNTS, we need to use those
+reasonable level of concurrency over ACCOUNTS, we need to use those
 parameters to control which branches have their home location on a
 given node. For example, if we created a 4-node cluster with a total
 of 12 branches, we would run the following command on node 2:

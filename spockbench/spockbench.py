@@ -17,6 +17,7 @@ class SpockBench:
         self.node = 1
         self.num_nodes = 3
         self.no_hid = False
+        self.no_delta_apply = False
         self.tempfiles = []
 
         # ----
@@ -90,15 +91,16 @@ class SpockBench:
         # ----
         # Configure balance columns for delta-conflict-avoidance
         # ----
-        cmd = ['pgbench']
-        cmd.append('-n')
-        cmd.append('-c1')
-        cmd.append('-t1')
-        cmd += ['-f', self.sql_fname['alter-TA']]
-        cmd += self.pgbench_opts
-        cmd += self.pgbench_args
-        print("configuring balance columns for delta-conflict-avoidance")
-        subprocess.run(cmd, stdout = subprocess.DEVNULL)
+        if self.no_delta_apply == False:
+            cmd = ['pgbench']
+            cmd.append('-n')
+            cmd.append('-c1')
+            cmd.append('-t1')
+            cmd += ['-f', self.sql_fname['alter-TA']]
+            cmd += self.pgbench_opts
+            cmd += self.pgbench_args
+            print("configuring balance columns for delta-conflict-avoidance")
+            subprocess.run(cmd, stdout = subprocess.DEVNULL)
 
         # ----
         # Add column pgbench_history.hid as a primary key for replication
@@ -127,7 +129,7 @@ class SpockBench:
             opts, self.pgbench_args = getopt(argv,
                 "iF:s:c:Cj:lL:M:nP:rR:t:T:dh:p:U:",
                 ['spock-node=', 'spock-num-nodes=', 'spock-tx-mix=',
-                 'spock-no-hid',
+                 'spock-no-hid', 'spock-no-delta-apply',
                  'initialize', 'fillfactor=', 'scale=',
                  'foreign-keys', 'index-tablespace=',
                  'partitions=', 'partition-method=',
@@ -168,6 +170,8 @@ class SpockBench:
                 self.tx_remote_TA = vals[2]
             elif opt in ['--spock-no-hid',]:
                 self.no_hid = True
+            elif opt in ['--spock-no-delta-apply',]:
+                self.no_delta_apply = True
             elif opt in ['-i', '--initialize',]:
                 self.is_init = True
             elif opt in ['-s', '--scale',]:
