@@ -6,6 +6,7 @@
 * [Running spockbench](#running-spockbench)
 * [What spockbench does](#what-spockbench-does)
 * [Checking consistency](#checking-consistency)
+* [License](#license)
 
 ## Overview
 
@@ -473,3 +474,7 @@ The output should look like this:
 (1 row)
 ```
 
+## License
+
+`spockbench` is licensed under the
+[pgEdge Community License v1.0](PGEDGE-COMMUNITY-LICENSE.md)
