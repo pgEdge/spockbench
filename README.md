@@ -273,7 +273,7 @@ sequence to start on the node-ID and increment by 100.
 
 Now on to running a benchmark:
 ```
-(venv) [postgres@db1 spockbench]$ spockbench -s12 -c20 -T60 -P5 spockdb
+(venv) [postgres@db1 spockbench]$ spockbench -n -s12 -c20 -T60 -P5 spockdb
 ```
 will do *almost* the exact same thing as `pgbench` would do.
 
@@ -395,7 +395,7 @@ that does not belong to the BID of the transaction. In the simulated
 belonging to its home branches, as well as 15% of remote ones. This
 does sound like a lot, but since there are 100,000 ACCOUNTS rows per
 branch, the probability of actually creating an update-update conflict
-is reather low.
+is rather low.
 
 ### Controlling the conflict probability
 
@@ -473,6 +473,13 @@ The output should look like this:
  OK    |     0 | abalance <> history.sum(delta)
 (1 row)
 ```
+
+**NOTE**: To maintain consistency over multiple `spockbench` runs
+it is important to specify the `-n` option. Without `-n` the
+underlying `pgbench` will TRUNCATE the `pgbench_history` table
+and perform a DB wide VACUUM. The TRUNCATE operation will obviously
+zero out the history sums without resetting the balances to zero,
+thereby destroying the consistency of the data.
 
 ## License
 
