@@ -484,4 +484,4 @@ thereby destroying the consistency of the data.
 ## License
 
 `spockbench` is licensed under the
-[pgEdge Community License v1.0](PGEDGE-COMMUNITY-LICENSE.md)
+[pgEdge Community License v1.1](LICENSE.md)

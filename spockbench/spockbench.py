@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+####################################################################
+######          Copyright (c)  2023-2025 PGEDGE           ##########
+####################################################################
+
 from getopt import getopt
 import importlib.resources
 import os
